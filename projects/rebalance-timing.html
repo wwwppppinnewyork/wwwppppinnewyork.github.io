@@ -60,12 +60,25 @@
   </table></div>
   <p>Every version lost to the calendar strategy. Daily score changes are mostly noise, so trading on them turns the book over every few days and pays the costs each time.</p>
 
+  <h2>E. Constrain beta?</h2>
+  <p>The top-20 portfolio is long only with a beta of about 0.85, so most of its risk is the market's. Keeping the same model and changing only the weights, with settings fixed before the run (the model's 100 best-scored stocks, 250-day beta, 5% cap per stock), all 20 start days combined:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Portfolio</th><th class="num">Ann. return</th><th class="num">Sharpe</th><th class="num">Max DD</th></tr>
+    <tr><td>Equal weight top 20</td><td class="num">7.8%</td><td class="num">0.47</td><td class="num neg">-42.3%</td></tr>
+    <tr><td>Max score, beta &le; 0.7</td><td class="num">6.6%</td><td class="num">0.46</td><td class="num neg">-30.7%</td></tr>
+    <tr><td>Min beta within the model's top 100</td><td class="num">11.3%</td><td class="num">0.75</td><td class="num neg">-15.4%</td></tr>
+    <tr><td>Control: min beta, whole universe, no model</td><td class="num">10.6%</td><td class="num">0.74</td><td class="num neg">-16.3%</td></tr>
+    <tr><td>CSI All Share index</td><td class="num">5.5%</td><td class="num">0.37</td><td class="num neg">-39.3%</td></tr>
+  </table></div>
+  <p>The beta cap cut the drawdown by 11 points but left the Sharpe ratio unchanged. Minimizing beta raised it to 0.75, but the control that ignores the model does just as well. The gain is the low-beta anomaly, not my stock selection.</p>
+
   <h2>Takeaways</h2>
   <ul class="tight">
     <li><strong>Report the distribution over start days, not one backtest.</strong> A single schedule can be off by several points in either direction.</li>
     <li><strong>Staggered sleeves are the free fix.</strong> They add no parameters, are easy to run live, and make drawdowns less dependent on the calendar.</li>
     <li><strong>Make the pipeline reproducible before reading anything into small differences.</strong> Unordered sets were enough to move results by several points.</li>
     <li><strong>Trading more often is not smarter timing.</strong> With a slow signal, it mostly adds cost.</li>
+    <li><strong>Give every improvement a control.</strong> A better Sharpe ratio after an optimization can come from a known anomaly rather than the model.</li>
   </ul>
   <p class="small muted">Historical backtest on free BaoStock / AkShare data, net of 0.03% commission and 0.1% stamp duty. Not investment advice.</p>
 </article>
