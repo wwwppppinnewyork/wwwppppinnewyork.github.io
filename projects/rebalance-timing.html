@@ -72,6 +72,15 @@
   </table></div>
   <p>The beta cap cut the drawdown by 11 points but left the Sharpe ratio unchanged. Minimizing beta raised it to 0.75, but the control that ignores the model does just as well. The gain is the low-beta anomaly, not my stock selection.</p>
 
+  <h2>F. Slow factors, tested out of sample</h2>
+  <p>Fundamental factors are slow: book-to-price had a Rank IC of 0.056 at 20 days and 0.128 at 120 days. Growth and profitability worked with the opposite sign in 2020-2025, and 20- to 60-day "momentum" was reversal. I chose factors on pre-2023 data only (|60-day IC| &ge; 0.03: sales-to-price, book-to-price, YoY profit growth), added them to the model and compared both models over the same 20 start days:</p>
+  <div class="table-wrap"><table>
+    <tr><th>Period</th><th class="num">Baseline Sharpe</th><th class="num">With new factors</th><th class="num">Offsets improved</th></tr>
+    <tr><td>2020-2022 (factors chosen here)</td><td class="num">0.45</td><td class="num">0.57</td><td class="num">16 / 20</td></tr>
+    <tr><td>2023-2025 (out of sample)</td><td class="num">0.49</td><td class="num">0.54</td><td class="num">11 / 20</td></tr>
+  </table></div>
+  <p>The gain shrank out of sample to about a coin flip across start days: right direction, not enough evidence. The index's Sharpe ratio over 2023-2025 was 0.46, so the bigger problem is the model itself.</p>
+
   <h2>Takeaways</h2>
   <ul class="tight">
     <li><strong>Report the distribution over start days, not one backtest.</strong> A single schedule can be off by several points in either direction.</li>
@@ -79,6 +88,7 @@
     <li><strong>Make the pipeline reproducible before reading anything into small differences.</strong> Unordered sets were enough to move results by several points.</li>
     <li><strong>Trading more often is not smarter timing.</strong> With a slow signal, it mostly adds cost.</li>
     <li><strong>Give every improvement a control.</strong> A better Sharpe ratio after an optimization can come from a known anomaly rather than the model.</li>
+    <li><strong>Choose on one period, judge on another.</strong> Factors picked on the full sample looked better in the years they were picked on than afterwards.</li>
   </ul>
   <p class="small muted">Historical backtest on free BaoStock / AkShare data, net of 0.03% commission and 0.1% stamp duty. Not investment advice.</p>
 </article>
