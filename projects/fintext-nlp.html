@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Financial Text NLP · Ping Wan</title>
+<meta name="description" content="A mini, public-data reproduction of a Chinese financial-text pipeline: crawling, cleaning, jieba, TF-IDF, BERT, PCA, sentiment, topics, risk features and SQLite.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site"><div class="wrap"><a class="name" href="../">Ping Wan</a><nav><a href="../#research">Research</a><a href="../#contact">Contact</a></nav></div></header>
+<main class="wrap">
+<article>
+  <p class="back"><a href="../#research">← All research</a></p>
+  <h1>Chinese financial-text NLP pipeline (mini reproduction)</h1>
+  <p class="meta">Research assistant project, Tianjin Polytechnic University, May to Jun 2025 · reproduced on public data in 2026 · <a href="https://github.com/wwwppppinnewyork/fintext-nlp-mini">Code on GitHub</a></p>
+
+  <div class="callout"><strong>A mini version, not the original.</strong> The original work processed 100,000+ texts from Wind and broker research reports. This reproduction rebuilds the same pipeline from scratch on 297 free texts (Eastmoney broker reports and stock news for 10 large A-shares). It contains none of the original code, data or results.</div>
+
+  <h2>The pipeline</h2>
+  <ul class="tight">
+    <li><strong>Crawl:</strong> broker report lists from Eastmoney's public API, report PDFs converted with pdfplumber, stock news via AkShare.</li>
+    <li><strong>Clean:</strong> cut disclaimers and per-page boilerplate, drop table fragments, de-duplicate.</li>
+    <li><strong>Represent:</strong> jieba with a finance dictionary, TF-IDF keywords, <code>bert-base-chinese</code> embeddings, PCA to 90% of the variance.</li>
+    <li><strong>Classify:</strong> sentiment (three methods compared) and KMeans topics chosen by silhouette.</li>
+    <li><strong>Risk features:</strong> weighted risk-word scores, 1 to 5 risk levels, monthly return volatility.</li>
+    <li><strong>Store:</strong> a SQLite research database with four tables, queried with pandas.</li>
+  </ul>
+
+  <h2>Sentiment: three methods, one test set</h2>
+  <p>466 held-out labelled Chinese financial headlines.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Method</th><th class="num">Accuracy</th><th class="num">Macro F1</th></tr>
+    <tr><td>Lexicon (24 + 24 words)</td><td class="num">0.644</td><td class="num">0.536</td></tr>
+    <tr><td>TF-IDF + logistic regression</td><td class="num">0.758</td><td class="num">0.730</td></tr>
+    <tr><td>FinBERT, pre-trained</td><td class="num">0.764</td><td class="num">0.725</td></tr>
+  </table></div>
+  <p>A supervised model trained on 1,863 headlines matches a pre-trained FinBERT; the short lexicon trails both.</p>
+
+  <h2>Does text risk predict next month's volatility?</h2>
+  <p>Month-t text features against month t+1 volatility, 51 stock-months. Next month, so the text only predicts what comes after it.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Month-t feature</th><th class="num">Spearman corr.</th></tr>
+    <tr><td>Text risk score</td><td class="num neg">-0.05</td></tr>
+    <tr><td>Negative-sentence share</td><td class="num neg">-0.13</td></tr>
+    <tr><td>Sentiment</td><td class="num">0.03</td></tr>
+    <tr><td>Baseline: month-t volatility</td><td class="num">0.37</td></tr>
+  </table></div>
+  <p>Controlling for current volatility, neither text feature is significant (|t| &lt; 1.2). On a sample this small that is an absence of evidence, not a conclusion.</p>
+
+  <h2>What the sample taught</h2>
+  <ul class="tight">
+    <li><strong>Cleaning decides the topics.</strong> Broker PDFs repeat legal disclaimers, sometimes on the cover page; until those sentences were removed, words like “investment adviser” and “United States” showed up among report keywords.</li>
+    <li><strong>Clusters find text types, not themes.</strong> KMeans (k = 7) split earnings reviews, fund-holdings news, money-flow news, buybacks and drug approvals.</li>
+  </ul>
+
+  <figure><img class="fig" src="../assets/img/fintext_pca.png" alt="Cumulative explained variance of PCA on BERT embeddings; 50 components explain 89%" loading="lazy"><figcaption>PCA on 768-dimensional BERT embeddings.</figcaption></figure>
+</article>
+</main>
+<footer><div class="wrap">© 2026 Ping Wan · Historical backtests, not investment advice.</div></footer>
+</body>
+</html>
