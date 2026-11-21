@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QQQ Factor Analysis · Ping Wan</title>
+<meta name="description" content="Is the Nasdaq-100 premium alpha or factor risk? Fama-French regressions on QQQ vs SPY, 1999-2026.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site"><div class="wrap"><a class="name" href="../">Ping Wan</a><nav><a href="../#research">Research</a><a href="../#contact">Contact</a></nav></div></header>
+<main class="wrap">
+<article>
+  <p class="back"><a href="../#research">← All research</a></p>
+  <h1>Is the Nasdaq-100 premium alpha or factor risk?</h1>
+  <p class="meta">Group project, STAT GU4205/GR5205 Linear Regression Models, Columbia University, Fall 2026 · <a href="https://github.com/wwwppppinnewyork/qqq-factor-analysis">Code on GitHub</a></p>
+
+  <p>From May 1999 to September 2026, $1,000 in QQQ grew to $16,360, against $9,233 in SPY. QQQ also fell 81% from peak to trough and took 14 years to recover. We ask whether its extra return is <em>alpha</em> or compensation for <em>factor exposure</em>. The data are 329 monthly observations of returns and Fama-French factors.</p>
+
+  <figure><img class="fig" src="../assets/img/qqq_growth.png" alt="Growth of 1,000 dollars in QQQ and SPY with drawdowns, 1999 to 2026" loading="lazy"></figure>
+
+  <h2>Findings</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">Alpha (annual)</th><th class="num">95% CI (Newey-West)</th><th class="num">p-value</th></tr>
+    <tr><td>CAPM</td><td class="num">0.96%</td><td class="num">[-4.48, 6.39]</td><td class="num">0.73</td></tr>
+    <tr><td>Fama-French 3</td><td class="num">2.24%</td><td class="num">[-0.89, 5.37]</td><td class="num">0.16</td></tr>
+    <tr><td>Fama-French 5</td><td class="num">4.74%</td><td class="num">[1.84, 7.64]</td><td class="num">0.001</td></tr>
+    <tr><td>FF5 + momentum</td><td class="num">5.01%</td><td class="num">[2.09, 7.94]</td><td class="num">0.001</td></tr>
+  </table></div>
+  <ul class="tight">
+    <li><strong>Against the market alone, there is no alpha.</strong> QQQ's Sharpe ratio (0.47) is almost identical to SPY's (0.48). Its higher return is about what its higher volatility predicts.</li>
+    <li><strong>Profitability and investment factors matter.</strong> QQQ loads negatively on value (HML -0.47), profitability (RMW -0.40) and investment (CMA -0.17). Adding RMW and CMA to FF3 is highly significant (F = 33.1, p &lt; 0.001).</li>
+    <li><strong>The five-factor model leaves a positive alpha.</strong> Those negative tilts are priced at a discount, so once they are accounted for QQQ looks too profitable rather than fairly paid. The alpha is significant (+4.7% a year).</li>
+    <li><strong>Beta rises in crises.</strong> Market beta increases by 0.08 per standard deviation of the crisis indicator (one-sided p = 0.014). It goes from 1.14 in an average state to about 1.30 in a severe one.</li>
+    <li><strong>Out of sample</strong> (train 1999-2018, test 2018-2026), FF5 has the lowest prediction error. Momentum adds nothing.</li>
+  </ul>
+
+  <figure><img class="fig" src="../assets/img/qqq_rolling_alpha.png" alt="36-month rolling alpha of QQQ under CAPM and the five-factor model" loading="lazy"><figcaption>36-month rolling alpha: CAPM vs the five-factor model.</figcaption></figure>
+  <figure><img class="fig" src="../assets/img/qqq_beta_state.png" alt="QQQ market beta by market state" loading="lazy"><figcaption>Market beta by market state.</figcaption></figure>
+
+  <h2>Methods</h2>
+  <ul class="tight">
+    <li>OLS with Newey-West (HAC) standard errors; nested F-tests and robust Wald tests.</li>
+    <li>Diagnostics: residual checks, VIF, influence measures, factor orthogonalization and ridge traces.</li>
+    <li>Robustness: dropping influential months and the 2000-02 crash, Huber regression, three crisis definitions.</li>
+    <li>Out-of-sample: a 70/30 time split comparing training MSE with test MSPR, rolling betas, a hedging backtest and an all-subsets comparison.</li>
+  </ul>
+</article>
+</main>
+<footer><div class="wrap">© 2026 Ping Wan · Historical analysis, not investment advice.</div></footer>
+</body>
+</html>

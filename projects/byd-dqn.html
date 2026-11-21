@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DQN Trading on BYD · Ping Wan</title>
+<meta name="description" content="A deep Q-network trading BYD (002594.SZ): feature engineering, a 2026 code review and a 10-seed out-of-sample backtest.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site"><div class="wrap"><a class="name" href="../">Ping Wan</a><nav><a href="../#research">Research</a><a href="../#contact">Contact</a></nav></div></header>
+<main class="wrap">
+<article>
+  <p class="back"><a href="../#research">← All research</a></p>
+  <h1>Deep Q-learning trading on BYD</h1>
+  <p class="meta">Research internship, Quantitative Finance and Reinforcement Learning, University of Nottingham Ningbo China, Jun to Aug 2024 · reviewed and rerun in 2026 · <a href="https://github.com/wwwppppinnewyork/byd-rl-trading">Code on GitHub</a></p>
+
+  <div class="callout"><strong>Result.</strong> Across 10 random seeds, the agent never beat buy and hold over the 2017-2024 test period. Results ranged from -14% to +186% depending only on the seed. One lucky run would have looked like a working strategy.</div>
+
+  <h2>The question</h2>
+  <p>Can an agent learn to trade a single stock by trial and error, and does what it learns hold up across market phases and transaction-cost assumptions? Each day the agent sees recent market information, chooses to buy, hold or sell, and is rewarded by the next day's move.</p>
+
+  <h2>My role</h2>
+  <ul class="tight">
+    <li>Cleaned ten years of BYD price and financial data in Python.</li>
+    <li>Engineered the model inputs: valuation (P/E), volatility and trading-volume features, plus moving averages, MACD, RSI, KDJ and Bollinger bands.</li>
+    <li>Supported development of the reinforcement-learning trading agent and tested its robustness across market regimes and transaction-cost assumptions.</li>
+  </ul>
+
+  <h2>Setup</h2>
+  <ul class="tight">
+    <li><strong>Data:</strong> daily bars, 2011-06-30 to 2024-06-25.</li>
+    <li><strong>State:</strong> the last six daily returns.</li>
+    <li><strong>Actions:</strong> hold, buy with all cash in 100-share lots, or sell everything.</li>
+    <li><strong>Agent:</strong> DQN in PyTorch with experience replay and a target network.</li>
+    <li><strong>Costs:</strong> 0.03% commission each way (5 CNY minimum) and 0.1% stamp duty on sales.</li>
+    <li><strong>Split by time:</strong> train on the first 1500 trading days, backtest greedily on the remaining 1635.</li>
+  </ul>
+
+  <h2>Results (historical backtest, 2017-09 to 2024-06)</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Strategy</th><th class="num">Median return</th><th class="num">Worst seed</th><th class="num">Best seed</th><th class="num">Beat buy and hold</th><th class="num">Median Sharpe</th><th class="num">Median max DD</th></tr>
+    <tr><td>DQN</td><td class="num">29.6%</td><td class="num neg">-14.0%</td><td class="num">185.5%</td><td class="num">0 / 10</td><td class="num">0.39</td><td class="num">-28.9%</td></tr>
+    <tr><td>DQN + MA21 trend filter</td><td class="num">5.3%</td><td class="num neg">-16.6%</td><td class="num">55.2%</td><td class="num">0 / 10</td><td class="num">0.12</td><td class="num">-21.5%</td></tr>
+    <tr><td>Buy and hold</td><td class="num">285.6%</td><td></td><td></td><td></td><td class="num">0.68</td><td class="num">-52.8%</td></tr>
+  </table></div>
+
+  <figure><img class="fig" src="../assets/img/byd_dqn_profit.png" alt="Cumulative return of the DQN agent (seed 0) against buy and hold, 2017 to 2024" loading="lazy"><figcaption>Seed 0: the agent moves to cash in late 2020 and misses the rally that followed.</figcaption></figure>
+
+  <ul class="tight">
+    <li><strong>Seed variance dominates.</strong> With the same code and data, the outcome depended mostly on the random seed. A single run, as reported in 2024, says almost nothing about the method.</li>
+    <li><strong>The agent learns to sit in cash.</strong> With only six past returns as its state, and a small penalty for staying out, several seeds stop trading early.</li>
+    <li><strong>Lower drawdowns are not alpha.</strong> Drawdowns are smaller than buy and hold's only because the agent is mostly out of the market. Its median Sharpe is still lower.</li>
+  </ul>
+
+  <h2>What the 2026 review fixed</h2>
+  <p>Re-reading my 2024 code turned up nine problems. Three of them changed the results:</p>
+  <ul class="tight">
+    <li>Indicators had been computed <em>before</em> the data was sorted by date. The data source returned rows out of order, so the agent's moving averages were off by 22 CNY on average.</li>
+    <li>The reward function skipped returns between 3% and 5%, so the previous step's reward leaked into the next one.</li>
+    <li>A failed download had written the API's error message into a data file, silently.</li>
+  </ul>
+  <p>The rerun also replaces a paid data API with free BaoStock data, removes a hard-coded API token and seeds every run.</p>
+
+  <figure><img class="fig" src="../assets/img/byd_indicators.png" alt="BYD price with moving averages and Bollinger bands, volume, and MACD, 2022 to 2023" loading="lazy"><figcaption>Indicator features, 2022-03 to 2023-03.</figcaption></figure>
+</article>
+</main>
+<footer><div class="wrap">© 2026 Ping Wan · Historical backtests, not investment advice.</div></footer>
+</body>
+</html>

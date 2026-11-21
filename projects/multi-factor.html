@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A-Share Multi-Factor Research · Ping Wan</title>
+<meta name="description" content="Multi-factor stock selection for China A-shares: point-in-time data, linear baselines, LightGBM ranking and JoinQuant execution.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site"><div class="wrap"><a class="name" href="../">Ping Wan</a><nav><a href="../#research">Research</a><a href="../#contact">Contact</a></nav></div></header>
+<main class="wrap">
+<article>
+  <p class="back"><a href="../#research">← All research</a></p>
+  <h1>A-share multi-factor stock selection</h1>
+  <p class="meta">Personal research project, 2026 · <a href="https://github.com/wwwppppinnewyork/ai-stock-Top-20">Code on GitHub</a></p>
+
+  <p>An end-to-end research stack for Chinese equities: point-in-time data, factor evaluation, linear and machine-learning ranking models, and execution rules that match what a broker will actually fill. Each part has a baseline and a check designed to catch my own mistakes.</p>
+
+  <h2>1. Data that only knows the past</h2>
+  <ul class="tight">
+    <li>Free BaoStock and AkShare data for the CSI 300 and CSI 500 universe, using historical index constituents rather than today's list.</li>
+    <li>Fundamentals keyed to announcement dates, falling back to the statutory deadline; reports older than 270 days are treated as stale.</li>
+    <li>14 factors across value, size, momentum, reversal, low volatility, low turnover, quality and growth.</li>
+  </ul>
+
+  <h2>2. Linear baselines</h2>
+  <p>Monthly snapshots, 2019-10 to 2025-09. Each model uses only earlier snapshots, with a one-snapshot embargo.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">Mean Rank IC</th><th class="num">ICIR</th><th class="num">Top 50 excess vs universe (ann.)</th><th class="num">Months beating universe</th></tr>
+    <tr><td>Z-score, equal weight</td><td class="num">0.040</td><td class="num">0.21</td><td class="num neg">-2.9%</td><td class="num">43%</td></tr>
+    <tr><td>Z-score, ICIR weighted</td><td class="num">0.063</td><td class="num">0.26</td><td class="num pos">+1.4%</td><td class="num">50%</td></tr>
+    <tr><td>WLS regression (sqrt market cap)</td><td class="num">0.033</td><td class="num">0.14</td><td class="num neg">-1.9%</td><td class="num">47%</td></tr>
+  </table></div>
+  <p>Positive rank IC did not carry over into top-50 returns after costs. Only the ICIR-weighted composite finished ahead of simply holding the universe, and its margin is small next to its month-to-month variation. The most reliable single factors were low volatility, low turnover and cash-flow yield. Profit and revenue growth had <em>negative</em> IC in this universe.</p>
+
+  <h2>3. LightGBM ranking</h2>
+  <p>A 12-factor strategy originally written for JoinQuant, ported to run locally on the free data. LightGBM is trained on 18 non-overlapping cross-sections, and every label window ends before the decision date.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Portfolio (2019-09 to 2025-12)</th><th class="num">Ann. return</th><th class="num">Sharpe</th><th class="num">Max drawdown</th></tr>
+    <tr><td>Linear 12-factor score, top 20</td><td class="num neg">-1.4%</td><td class="num">0.12</td><td class="num">-72.3%</td></tr>
+    <tr><td>LightGBM, top 20</td><td class="num">12.1%</td><td class="num">0.60</td><td class="num">-33.6%</td></tr>
+    <tr><td>Equal-weight CSI 300 + 500</td><td class="num">8.5%</td><td class="num">0.51</td><td class="num">-28.6%</td></tr>
+    <tr><td>CSI All Share index</td><td class="num">5.5%</td><td class="num">0.36</td><td class="num">-37.1%</td></tr>
+  </table></div>
+  <ul class="tight">
+    <li>The hand-set linear weights treat momentum and money-flow factors as positive, but 10 of the 12 factors had negative IC here. LightGBM learns the reversal from past data instead.</li>
+    <li><strong>Leakage check:</strong> trained on shuffled labels, the same pipeline gives a mean out-of-sample IC of -0.001.</li>
+    <li><strong>Caveat I found later:</strong> this run's rebalance schedule was one of the luckier start days. Across all 20 possible start days the median is much lower. See the <a href="rebalance-timing.html">timing study</a>.</li>
+  </ul>
+
+  <h2>4. Execution that matches the broker</h2>
+  <p>On JoinQuant the first version sat on 34% cash. STAR Market stocks need at least 200 shares per order, and rounding every order down to 100 shares left high-priced stocks at zero. I rewrote the order logic:</p>
+  <ul class="tight">
+    <li>Each stock's lot rule is applied when sizing.</li>
+    <li>Overweight positions are trimmed before buying.</li>
+    <li>Leftover cash goes into the most underweight names, one lot at a time.</li>
+    <li>Fills that fail on halted or limit-up days are retried daily.</li>
+  </ul>
+  <p>In simulation, idle cash fell to about 0.5%.</p>
+</article>
+</main>
+<footer><div class="wrap">© 2026 Ping Wan · Historical backtests, not investment advice.</div></footer>
+</body>
+</html>

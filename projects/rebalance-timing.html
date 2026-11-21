@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rebalance Timing Study · Ping Wan</title>
+<meta name="description" content="How much of a backtest is the calendar? Timing luck, signal decay, holding period and signal-triggered trading for a LightGBM top-20 A-share strategy.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site"><div class="wrap"><a class="name" href="../">Ping Wan</a><nav><a href="../#research">Research</a><a href="../#contact">Contact</a></nav></div></header>
+<main class="wrap">
+<article>
+  <p class="back"><a href="../#research">← All research</a></p>
+  <h1>How much of a backtest is the calendar?</h1>
+  <p class="meta">Personal research, Nov 2026 · LightGBM top-20 strategy on CSI 300 + CSI 500, 2019-2025 · <a href="https://github.com/wwwppppinnewyork/ai-stock-Top-20/blob/main/multi_factor_strategy/src/timing_tests.py">Code</a> · <a href="https://github.com/wwwppppinnewyork/ai-stock-Top-20/blob/main/multi_factor_strategy/results/timing_tests.md">Full results</a></p>
+
+  <p>My <a href="multi-factor.html">LightGBM stock-ranking strategy</a> rebalanced every 20 trading days and showed a strong backtest. On JoinQuant it looked much weaker. One suspect was the rebalance schedule. A 20-day cycle can start on any of 20 days, and nothing about the model says which one is right.</p>
+
+  <div class="callout"><strong>Result.</strong> The start day alone moved annual return between 1.2% and 15.1%; the median was 8.0%, against 4.4% for the index. My original schedule turned out to be the best of the 20. Spreading capital over staggered schedules removes this luck without adding a single parameter.</div>
+
+  <h2>A. Timing luck</h2>
+  <p>I ran the identical strategy (same model, same features, same costs) 20 times, once for each possible start day of the cycle, over the same window (2019-11 to 2025-12).</p>
+  <figure><img class="fig" src="../assets/img/timing_offsets.png" alt="Bar chart of annual return for each of the 20 start offsets; offset 7, the original schedule, is the highest at 15.1 percent" loading="lazy"><figcaption>Annual return by start day. Orange: the schedule used in my original backtest.</figcaption></figure>
+  <div class="table-wrap"><table>
+    <tr><th></th><th class="num">Ann. return</th><th class="num">Sharpe</th><th class="num">Max drawdown</th></tr>
+    <tr><td>Worst start day</td><td class="num">1.2%</td><td class="num">0.17</td><td class="num">-68.2%</td></tr>
+    <tr><td>Median</td><td class="num">8.0%</td><td class="num">0.45</td><td class="num">-48.1%</td></tr>
+    <tr><td>Best start day</td><td class="num">15.1%</td><td class="num">0.72</td><td class="num">-34.1%</td></tr>
+    <tr><td>CSI All Share index</td><td class="num">4.4%</td><td class="num">0.31</td><td class="num">-39.3%</td></tr>
+  </table></div>
+  <p>A second source of noise showed up along the way. Early runs were not bit-for-bit reproducible: the stock universe was stored in a Python set, so the order of training rows, and with it LightGBM's bagging samples, changed from run to run. That alone moved a single schedule's annual return by a median of 4 percentage points, and by up to 7. Sorting the universe fixed it, and two runs now match exactly. Across all runs the original schedule stayed in the top quartile.</p>
+
+  <h2>B. How fast does the signal decay?</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Horizon (trading days)</th><th class="num">1</th><th class="num">5</th><th class="num">10</th><th class="num">20</th><th class="num">40</th><th class="num">60</th></tr>
+    <tr><td>Mean Rank IC</td><td class="num">0.022</td><td class="num">0.024</td><td class="num">0.023</td><td class="num">0.037</td><td class="num">0.042</td><td class="num">0.049</td></tr>
+  </table></div>
+  <p>IC keeps rising out to 60 days, so the signal is slow. Short holding periods pay full trading costs without collecting much of the signal.</p>
+
+  <h2>C. Holding period</h2>
+  <p>Each holding period is run as equal-capital staggered sleeves, so timing luck averages out (2020-01 to 2025-12).</p>
+  <figure><img class="fig" src="../assets/img/timing_holding.png" alt="Bar chart of annual return by holding period: 5 days negative, 10 and 20 days about 6.6 percent, 40 days 11.9 percent, 60 days 6.3 percent" loading="lazy"></figure>
+  <div class="table-wrap"><table>
+    <tr><th>Portfolio</th><th class="num">Ann. return</th><th class="num">Sharpe</th><th class="num">Max drawdown</th></tr>
+    <tr><td>Hold 5 days, staggered</td><td class="num neg">-4.4%</td><td class="num">-0.11</td><td class="num">-49.6%</td></tr>
+    <tr><td>Hold 20 days, 20 staggered sleeves</td><td class="num">6.6%</td><td class="num">0.42</td><td class="num">-42.2%</td></tr>
+    <tr><td>Hold 40 days, staggered</td><td class="num">11.9%</td><td class="num">0.65</td><td class="num">-35.3%</td></tr>
+    <tr><td>Hold 20 days, one schedule (offset 0)</td><td class="num">4.1%</td><td class="num">0.29</td><td class="num">-48.8%</td></tr>
+  </table></div>
+  <p>40 days came out best in every run, which fits the slow IC decay. But it rests on four sleeves and one six-year sample, so I treat it as a lead to test out of sample, not a setting to adopt.</p>
+
+  <h2>D. Let the signal decide when to trade?</h2>
+  <p>Instead of a calendar, score every day and sell a holding only when it falls below rank S, refilling with the best stock not held. One model, retrained every 20 days, scores each day's factors.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Sell when rank falls below</th><th class="num">30</th><th class="num">60</th><th class="num">100</th><th class="num">200</th></tr>
+    <tr><td>Annual return</td><td class="num neg">-11.3%</td><td class="num neg">-4.0%</td><td class="num neg">-0.5%</td><td class="num">0.7%</td></tr>
+    <tr><td>Round trips per slot per year</td><td class="num">59</td><td class="num">37</td><td class="num">27</td><td class="num">17</td></tr>
+  </table></div>
+  <p>Every version lost to the calendar strategy. Daily score changes are mostly noise, so trading on them turns the book over every few days and pays the costs each time.</p>
+
+  <h2>Takeaways</h2>
+  <ul class="tight">
+    <li><strong>Report the distribution over start days, not one backtest.</strong> A single schedule can be off by several points in either direction.</li>
+    <li><strong>Staggered sleeves are the free fix.</strong> They add no parameters, are easy to run live, and make drawdowns less dependent on the calendar.</li>
+    <li><strong>Make the pipeline reproducible before reading anything into small differences.</strong> Unordered sets were enough to move results by several points.</li>
+    <li><strong>Trading more often is not smarter timing.</strong> With a slow signal, it mostly adds cost.</li>
+  </ul>
+  <p class="small muted">Historical backtest on free BaoStock / AkShare data, net of 0.03% commission and 0.1% stamp duty. Not investment advice.</p>
+</article>
+</main>
+<footer><div class="wrap">© 2026 Ping Wan · Historical backtests, not investment advice.</div></footer>
+</body>
+</html>
