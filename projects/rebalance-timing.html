@@ -81,6 +81,18 @@
   </table></div>
   <p>The gain shrank out of sample to about a coin flip across start days: right direction, not enough evidence. The index's Sharpe ratio over 2023-2025 was 0.46, so the bigger problem is the model itself.</p>
 
+  <h2>G. Which factors broke, and is anything significant?</h2>
+  <p>Year by year, most of the model's inputs worked in 2019-2020 and turned negative after the 2021 style shift. Only the limit-up count (negative every year) and low beta (positive in five of seven years) kept their sign. LightGBM learns to flip signs from its trailing window, so the model score stayed positive in five of six full years, but it lags: in 2025 low beta flipped and the model score's IC turned negative (-0.037).</p>
+  <p>Deflated Sharpe ratios (Bailey and L&oacute;pez de Prado) ask how likely the true Sharpe ratio is above zero after counting how many variants were tried. With all 141 variants run, pure noise would show a best Sharpe ratio of 0.50.</p>
+  <div class="table-wrap"><table>
+    <tr><th>Portfolio</th><th class="num">Sharpe</th><th class="num">PSR</th><th class="num">DSR, N = 2</th><th class="num">DSR, N = 141</th></tr>
+    <tr><td>Equal weight top 20</td><td class="num">0.47</td><td class="num">0.87</td><td class="num">0.82</td><td class="num">0.47</td></tr>
+    <tr><td>Min beta within the model's top 100</td><td class="num">0.75</td><td class="num">0.96</td><td class="num">0.94</td><td class="num">0.72</td></tr>
+    <tr><td>Control: min beta, no model</td><td class="num">0.74</td><td class="num">0.96</td><td class="num">0.94</td><td class="num">0.71</td></tr>
+    <tr><td>Best single backtest (picked from 80)</td><td class="num">0.91</td><td class="num">0.99</td><td class="num">0.97</td><td class="num">0.84</td></tr>
+  </table></div>
+  <p>The model strategy is not significant even before deflation. The only result that clears 0.95, and only at a small trial count, is low beta, which needs no model at all.</p>
+
   <h2>Takeaways</h2>
   <ul class="tight">
     <li><strong>Report the distribution over start days, not one backtest.</strong> A single schedule can be off by several points in either direction.</li>
@@ -89,6 +101,7 @@
     <li><strong>Trading more often is not smarter timing.</strong> With a slow signal, it mostly adds cost.</li>
     <li><strong>Give every improvement a control.</strong> A better Sharpe ratio after an optimization can come from a known anomaly rather than the model.</li>
     <li><strong>Choose on one period, judge on another.</strong> Factors picked on the full sample looked better in the years they were picked on than afterwards.</li>
+    <li><strong>Count your tries.</strong> A Sharpe ratio means little without the number of variants behind it; deflating for them is what separates a finding from the best of many draws.</li>
   </ul>
   <p class="small muted">Historical backtest on free BaoStock / AkShare data, net of 0.03% commission and 0.1% stamp duty. Not investment advice.</p>
 </article>
